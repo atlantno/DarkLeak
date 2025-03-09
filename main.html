@@ -323,11 +323,11 @@
         const adminPassword = "shadomvd88";
         const hashedAdminPassword = CryptoJS.SHA256(adminPassword).toString();
 
-        // Зашифрованные настройки GitHub API (base64)
-        const GITHUB_TOKEN = atob('Z2hwX3pjMTg5YWxEbDR6NTlBWDQ5emhRUGoyMlduT2xGbDA0Yncxcw==');
-        const REPO_OWNER = atob('YXRsYW50bm8=');
-        const REPO_NAME = atob('RGFya0xlYWs=');
-        const FILE_PATH = atob('ZGF0YS5qc29u');
+// Зашифрованные настройки GitHub API (base64)
+const GITHUB_TOKEN = atob('Z2hwXzFheHRkU0RmckJjTDFJOVVWNGlweTNqZFk5S3Q4dnYyUThqQlQ=');
+const REPO_OWNER = 'atlantno';
+const REPO_NAME = 'DarkLeak';
+const FILE_PATH = 'data.json';
 
         let isAuthenticated = JSON.parse(localStorage.getItem('isAuthenticated')) || false;
         let currentUser = localStorage.getItem('currentUser') || null;
@@ -368,7 +368,8 @@
 
         // Сохранение данных в GitHub
         async function saveDataToGitHub(data) {
-            const content = btoa(JSON.stringify(data, null, 2));
+            const jsonString = JSON.stringify(data, null, 2);
+            const content = btoa(unescape(encodeURIComponent(jsonString))); // Исправление для не-Latin1 символов
             const body = {
                 message: `Update data.json at ${new Date().toISOString()}`,
                 content: content,
@@ -532,37 +533,37 @@
             const errorElement = document.getElementById('registerError');
 
             if (!username || !email || !password || !confirmPassword) {
-                errorElement.textContent = 'Заполните все поля!';
+                errorElement.textContent = 'Все поля обязательны для заполнения. Пожалуйста, заполните все поля.';
                 errorElement.style.display = 'block';
                 return;
             }
-
+            
             if (username.length < 5 || username.length > 16) {
-                errorElement.textContent = 'Логин должен быть от 5 до 16 символов!';
+                errorElement.textContent = 'Логин должен содержать от 5 до 16 символов. Пожалуйста, выберите более подходящее имя.';
                 errorElement.style.display = 'block';
                 return;
             }
-
+            
             if (password.length < 6 || password.length > 18) {
-                errorElement.textContent = 'Пароль должен быть от 6 до 18 символов!';
+                errorElement.textContent = 'Пароль должен быть от 6 до 18 символов. Пожалуйста, выберите более надежный пароль.';
                 errorElement.style.display = 'block';
                 return;
             }
-
+            
             if (password !== confirmPassword) {
-                errorElement.textContent = 'Пароли не совпадают!';
+                errorElement.textContent = 'Пароли не совпадают. Убедитесь, что оба поля введены одинаково.';
                 errorElement.style.display = 'block';
                 return;
             }
-
+            
             if (users.find(u => u.username === username)) {
-                errorElement.textContent = 'Логин уже занят!';
+                errorElement.textContent = 'Этот логин уже занят. Пожалуйста, выберите другой.';
                 errorElement.style.display = 'block';
                 return;
             }
-
+            
             if (users.find(u => u.email === email)) {
-                errorElement.textContent = 'Email уже используется!';
+                errorElement.textContent = 'Этот email уже используется. Пожалуйста, используйте другой адрес или восстановите доступ к существующей учетной записи.';
                 errorElement.style.display = 'block';
                 return;
             }
