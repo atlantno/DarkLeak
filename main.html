@@ -323,11 +323,11 @@
         const adminPassword = "shadomvd88";
         const hashedAdminPassword = CryptoJS.SHA256(adminPassword).toString();
 
-// Зашифрованные настройки GitHub API (base64)
-const GITHUB_TOKEN = atob('Z2hwXzFheHRkU0RmckJjTDFJOVVWNGlweTNqZFk5S3Q4dnYyUThqQlQ=');
-const REPO_OWNER = 'atlantno';
-const REPO_NAME = 'DarkLeak';
-const FILE_PATH = 'data.json';
+        // Настройки GitHub API (без шифрования токена)
+        const GITHUB_TOKEN = "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";
+        const REPO_OWNER = "atlantno";
+        const REPO_NAME = "DarkLeak";
+        const FILE_PATH = "data.json";
 
         let isAuthenticated = JSON.parse(localStorage.getItem('isAuthenticated')) || false;
         let currentUser = localStorage.getItem('currentUser') || null;
