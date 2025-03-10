@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <style>
@@ -321,8 +320,8 @@
         DarkLeak © 2025 | <a href="#">Telegram</a>
     </footer>
 
-    <script>
-        // Инициализация Firebase (замени на свои данные)
+    <script type="text/javascript">
+        // Инициализация Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBm3E_cXp1oIblEznJOOcu2sYcMuIOP0No",
             authDomain: "darkleak-14b1f.firebaseapp.com",
@@ -332,15 +331,15 @@
             messagingSenderId: "540820756770",
             appId: "1:540820756770:web:69d1a853849508f7166d7b",
             measurementId: "G-TCNB3WQ82W"
-          };
+        };
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        // Глобальные переменные
         const adminUsername = "DarkLeak";
         const adminPassword = "shadomvd88";
         const hashedAdminPassword = CryptoJS.SHA256(adminPassword).toString();
-
         let isAuthenticated = JSON.parse(localStorage.getItem('isAuthenticated')) || false;
         let currentUser = localStorage.getItem('currentUser') || null;
         let users = [];
@@ -348,7 +347,7 @@
         let viewedPosts = {};
         let postToDelete = null;
 
-        // Получение данных из Firebase
+        // Функции работы с данными
         async function fetchData() {
             try {
                 const snapshot = await database.ref('/').once('value');
@@ -357,7 +356,6 @@
                     users = data.users || [];
                     posts = data.posts || [];
                     viewedPosts = data.viewedPosts || {};
-                    console.log('Данные загружены из Firebase');
                 } else {
                     await initData();
                 }
@@ -366,20 +364,17 @@
             }
         }
 
-        // Сохранение данных в Firebase
         async function saveData() {
             const data = { users, posts, viewedPosts };
             try {
                 await database.ref('/').set(data);
-                console.log('Данные сохранены в Firebase');
+                localStorage.setItem('isAuthenticated', JSON.stringify(isAuthenticated));
+                localStorage.setItem('currentUser', currentUser);
             } catch (error) {
                 console.error('Ошибка при сохранении данных:', error);
             }
-            localStorage.setItem('isAuthenticated', JSON.stringify(isAuthenticated));
-            localStorage.setItem('currentUser', currentUser);
         }
 
-        // Инициализация данных, если база пустая
         async function initData() {
             users = [{
                 username: adminUsername,
@@ -390,10 +385,10 @@
                 title: "Инструкция",
                 type: "pinned",
                 content: "Чтобы твой слив выглядел ахуенно и приносил пользу, следуй этим правилам, братан:\n\n" +
-                         "- **Название:** Пиши коротко и по делу, например, \"Логи Gmail\" или \"База TG\". Не трынди херню вроде \"Всё\".\n" +
-                         "- **Автор:** Выбирай крутой ник (CyberGhost, Anon1337), но не пали своё настоящее имя, дебил.\n" +
-                         "- **Контент:** Слив должен быть годным, а не высером из жопы. Добавляй файлы, ссылки или текст, чтобы другие могли юзать.\n\n" +
-                         "Если сделаешь всё по уму, твой слив разъебёт всех нахуй! Давай, хакер, жги!",
+                        "- **Название:** Пиши коротко и по делу, например, \"Логи Gmail\" или \"База TG\". Не трынди херню вроде \"Всё\".\n" +
+                        "- **Автор:** Выбирай крутой ник (CyberGhost, Anon1337), но не пали своё настоящее имя, дебил.\n" +
+                        "- **Контент:** Слив должен быть годным, а не высером из жопы. Добавляй файлы, ссылки или текст, чтобы другие могли юзать.\n\n" +
+                        "Если сделаешь всё по уму, твой слив разъебёт всех нахуй! Давай, хакер, жги!",
                 comments: 78,
                 views: 6666,
                 author: "DarkLeakReaper",
@@ -403,6 +398,7 @@
             await saveData();
         }
 
+        // Функции управления интерфейсом
         function updateAuthButtons() {
             const authButtons = document.getElementById('authButtons');
             if (isAuthenticated) {
@@ -502,6 +498,7 @@
             }
         }
 
+        // Обработчики форм
         document.getElementById('loginForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const username = document.getElementById('loginUsername').value;
@@ -529,40 +526,40 @@
             const errorElement = document.getElementById('registerError');
 
             if (!username || !email || !password || !confirmPassword) {
-                errorElement.textContent = 'Все поля обязательны для заполнения. Пожалуйста, заполните все необходимые поля, чтобы продолжить.';
+                errorElement.textContent = 'Все поля обязательны для заполнения.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (username.length < 5 || username.length > 16) {
-                errorElement.textContent = 'Логин должен быть от 5 до 16 символов. Пожалуйста, выберите логин, который соответствует этим ограничениям.';
+                errorElement.textContent = 'Логин должен быть от 5 до 16 символов.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (password.length < 6 || password.length > 18) {
-                errorElement.textContent = 'Пароль должен быть от 6 до 18 символов. Убедитесь, что ваш пароль соответствует этим требованиям для безопасности.';
+                errorElement.textContent = 'Пароль должен быть от 6 до 18 символов.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (password !== confirmPassword) {
-                errorElement.textContent = 'Пароли не совпадают. Пожалуйста, убедитесь, что оба поля для пароля содержат одинаковое значение.';
+                errorElement.textContent = 'Пароли не совпадают.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (users.find(u => u.username === username)) {
-                errorElement.textContent = 'Этот логин уже занят. Пожалуйста, выберите другой логин для вашей учетной записи.';
+                errorElement.textContent = 'Этот логин уже занят.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (users.find(u => u.email === email)) {
-                errorElement.textContent = 'Этот email уже используется. Пожалуйста, используйте другой email или войдите в существующую учетную запись.';
+                errorElement.textContent = 'Этот email уже используется.';
                 errorElement.style.display = 'block';
                 return;
-            }            
+            }
 
             const hashedPassword = CryptoJS.SHA256(password).toString();
             const hashedEmail = CryptoJS.SHA256(email).toString();
@@ -591,6 +588,7 @@
             closeAddPostModal();
         });
 
+        // Функции рендеринга
         function renderMainPage() {
             const pinnedPosts = posts.filter(p => p.type === 'pinned');
             const allPosts = posts.filter(p => p.type === 'all');
@@ -656,6 +654,7 @@
             }
         }
 
+        // Обработчики событий
         document.getElementById('searchButton').addEventListener('click', function() {
             const searchQuery = document.getElementById('searchInput').value.trim();
             if (searchQuery === '') {
