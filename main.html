@@ -7,6 +7,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
         body { 
@@ -319,15 +322,24 @@
     </footer>
 
     <script>
+        // Инициализация Firebase (замени на свои данные)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBm3E_cXp1oIblEznJOOcu2sYcMuIOP0No",
+            authDomain: "darkleak-14b1f.firebaseapp.com",
+            databaseURL: "https://darkleak-14b1f-default-rtdb.firebaseio.com",
+            projectId: "darkleak-14b1f",
+            storageBucket: "darkleak-14b1f.firebasestorage.app",
+            messagingSenderId: "540820756770",
+            appId: "1:540820756770:web:69d1a853849508f7166d7b",
+            measurementId: "G-TCNB3WQ82W"
+          };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         const adminUsername = "DarkLeak";
         const adminPassword = "shadomvd88";
         const hashedAdminPassword = CryptoJS.SHA256(adminPassword).toString();
-
-        // Настройки GitHub API (без шифрования токена)
-        const GITHUB_TOKEN = "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";
-        const REPO_OWNER = "atlantno";
-        const REPO_NAME = "DarkLeak";
-        const FILE_PATH = "data.json";
 
         let isAuthenticated = JSON.parse(localStorage.getItem('isAuthenticated')) || false;
         let currentUser = localStorage.getItem('currentUser') || null;
@@ -335,76 +347,60 @@
         let posts = [];
         let viewedPosts = {};
         let postToDelete = null;
-        let sha = null;
 
-        // Получение данных из GitHub
+        // Получение данных из Firebase
         async function fetchData() {
             try {
-                const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
-                    headers: {
-                        'Authorization': `token ${GITHUB_TOKEN}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    const content = JSON.parse(atob(data.content));
-                    users = content.users || [];
-                    posts = content.posts || [];
-                    viewedPosts = content.viewedPosts || {};
-                    sha = data.sha;
-                    console.log('Данные загружены с GitHub');
-                } else if (response.status === 404) {
-                    // Если файла нет, создаем его
-                    await saveDataToGitHub({ users: [], posts: [], viewedPosts: {} });
-                    await fetchData(); // Повторно загружаем после создания
+                const snapshot = await database.ref('/').once('value');
+                const data = snapshot.val();
+                if (data) {
+                    users = data.users || [];
+                    posts = data.posts || [];
+                    viewedPosts = data.viewedPosts || {};
+                    console.log('Данные загружены из Firebase');
                 } else {
-                    console.error('Ошибка при загрузке:', response.status);
+                    await initData();
                 }
             } catch (error) {
                 console.error('Ошибка при загрузке данных:', error);
             }
         }
 
-        // Сохранение данных в GitHub
-        async function saveDataToGitHub(data) {
-            const jsonString = JSON.stringify(data, null, 2);
-            const content = btoa(unescape(encodeURIComponent(jsonString))); // Исправление для не-Latin1 символов
-            const body = {
-                message: `Update data.json at ${new Date().toISOString()}`,
-                content: content,
-                sha: sha || null // Используем текущий SHA или null для первого создания
-            };
-
+        // Сохранение данных в Firebase
+        async function saveData() {
+            const data = { users, posts, viewedPosts };
             try {
-                const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${GITHUB_TOKEN}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(body)
-                });
-                if (response.ok) {
-                    const result = await response.json();
-                    sha = result.content.sha; // Обновляем SHA после сохранения
-                    console.log('Данные сохранены, новый SHA:', sha);
-                } else {
-                    console.error('Ошибка при сохранении:', await response.text());
-                }
+                await database.ref('/').set(data);
+                console.log('Данные сохранены в Firebase');
             } catch (error) {
                 console.error('Ошибка при сохранении данных:', error);
             }
-        }
-
-        // Сохранение локальных данных и синхронизация с GitHub
-        async function saveData() {
             localStorage.setItem('isAuthenticated', JSON.stringify(isAuthenticated));
             localStorage.setItem('currentUser', currentUser);
-            const data = { users, posts, viewedPosts };
-            await saveDataToGitHub(data);
-            await fetchData(); // Синхронизируем после сохранения
+        }
+
+        // Инициализация данных, если база пустая
+        async function initData() {
+            users = [{
+                username: adminUsername,
+                password: hashedAdminPassword,
+                email: CryptoJS.SHA256("admin@darkleak.com").toString()
+            }];
+            posts = [{
+                title: "Инструкция",
+                type: "pinned",
+                content: "Чтобы твой слив выглядел ахуенно и приносил пользу, следуй этим правилам, братан:\n\n" +
+                         "- **Название:** Пиши коротко и по делу, например, \"Логи Gmail\" или \"База TG\". Не трынди херню вроде \"Всё\".\n" +
+                         "- **Автор:** Выбирай крутой ник (CyberGhost, Anon1337), но не пали своё настоящее имя, дебил.\n" +
+                         "- **Контент:** Слив должен быть годным, а не высером из жопы. Добавляй файлы, ссылки или текст, чтобы другие могли юзать.\n\n" +
+                         "Если сделаешь всё по уму, твой слив разъебёт всех нахуй! Давай, хакер, жги!",
+                comments: 78,
+                views: 6666,
+                author: "DarkLeakReaper",
+                date: "09 Мар 2025"
+            }];
+            viewedPosts = {};
+            await saveData();
         }
 
         function updateAuthButtons() {
@@ -533,40 +529,40 @@
             const errorElement = document.getElementById('registerError');
 
             if (!username || !email || !password || !confirmPassword) {
-                errorElement.textContent = 'Все поля обязательны для заполнения. Пожалуйста, заполните все поля.';
+                errorElement.textContent = 'Все поля обязательны для заполнения. Пожалуйста, заполните все необходимые поля, чтобы продолжить.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (username.length < 5 || username.length > 16) {
-                errorElement.textContent = 'Логин должен содержать от 5 до 16 символов. Пожалуйста, выберите более подходящее имя.';
+                errorElement.textContent = 'Логин должен быть от 5 до 16 символов. Пожалуйста, выберите логин, который соответствует этим ограничениям.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (password.length < 6 || password.length > 18) {
-                errorElement.textContent = 'Пароль должен быть от 6 до 18 символов. Пожалуйста, выберите более надежный пароль.';
+                errorElement.textContent = 'Пароль должен быть от 6 до 18 символов. Убедитесь, что ваш пароль соответствует этим требованиям для безопасности.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (password !== confirmPassword) {
-                errorElement.textContent = 'Пароли не совпадают. Убедитесь, что оба поля введены одинаково.';
+                errorElement.textContent = 'Пароли не совпадают. Пожалуйста, убедитесь, что оба поля для пароля содержат одинаковое значение.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (users.find(u => u.username === username)) {
-                errorElement.textContent = 'Этот логин уже занят. Пожалуйста, выберите другой.';
+                errorElement.textContent = 'Этот логин уже занят. Пожалуйста, выберите другой логин для вашей учетной записи.';
                 errorElement.style.display = 'block';
                 return;
             }
             
             if (users.find(u => u.email === email)) {
-                errorElement.textContent = 'Этот email уже используется. Пожалуйста, используйте другой адрес или восстановите доступ к существующей учетной записи.';
+                errorElement.textContent = 'Этот email уже используется. Пожалуйста, используйте другой email или войдите в существующую учетную запись.';
                 errorElement.style.display = 'block';
                 return;
-            }
+            }            
 
             const hashedPassword = CryptoJS.SHA256(password).toString();
             const hashedEmail = CryptoJS.SHA256(email).toString();
@@ -589,7 +585,7 @@
             }
 
             posts.push({ title, type, content, comments: 0, views: 0, author: currentUser, date });
-            await saveData(); // Асинхронно сохраняем
+            await saveData();
             renderMainPage();
             document.getElementById('addPostForm').reset();
             closeAddPostModal();
